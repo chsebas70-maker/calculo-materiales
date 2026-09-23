@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Materiales de Construcción</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#0f172a',
+                            slate: '#1e293b',
+                            accent: '#f59e0b', // Safety Amber / Construction Yellow
+                            accentHover: '#d97706',
+                            blue: '#2563eb',
+                            concrete: '#e2e8f0',
+                            lightBg: '#f8fafc'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .print-shadow-none {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+        }
+        .print-only {
+            display: none;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-full flex flex-col antialiased">
+
+    <!-- Header -->
+    <header class="bg-brand-navy text-white border-b-4 border-brand-accent shadow-lg sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-accent p-2.5 rounded-lg text-brand-navy font-black text-2xl shadow-inner">
+                        <i class="fa-solid fa-hard-hat"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">ObraCalc <span class="text-brand-accent text-xs px-2 py-0.5 rounded bg-slate-800 uppercase tracking-widest font-bold border border-amber-500/30">Pro</span></h1>
+                        <p class="text-xs text-slate-400">Cálculo de Materiales y Costos de Construcción</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button onclick="toggleGlobalPricesModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center space-x-2 shadow-sm">
+                        <i class="fa-solid fa-tags"></i>
+                        <span>Precios Unitarios</span>
+                    </button>
+                    <button onclick="switchTab('summary-tab')" class="px-3.5 py-2 bg-brand-accent hover:bg-brand-accentHover text-brand-navy font-bold text-xs sm:text-sm rounded-lg transition-all flex items-center space-x-2 shadow-md relative">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <span>Resumen</span>
+                        <span id="cart-count-badge" class="ml-1 bg-brand-navy text-white text-xs px-1.5 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Tab Navigation Bar -->
+        <div class="no-print bg-white p-2 rounded-xl shadow-sm border border-slate-200 mb-6 flex overflow-x-auto gap-2">
+            <button id="btn-muros" onclick="switchTab('muros-tab')" class="tab-btn flex-1 min-w-[120px] py-2.5 px-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition-all bg-brand-navy text-white shadow-sm">
+                <i class="fa-solid fa-cubes"></i>
+                <span>Muros</span>
+            </button>
+            <button id="btn-concreto" onclick="switchTab('concreto-tab')" class="tab-btn flex-1 min-w-[120px] py-2.5 px-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition-all text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-truck-mortero text-slate-500"></i>
+                <span>Concreto / Losa</span>
+            </button>
+            <button id="btn-revoque" onclick="switchTab('revoque-tab')" class="tab-btn flex-1 min-w-[120px] py-2.5 px-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition-all text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-layer-group text-slate-500"></i>
+                <span>Revoque</span>
+            </button>
+            <button id="btn-pintura" onclick="switchTab('pintura-tab')" class="tab-btn flex-1 min-w-[120px] py-2.5 px-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition-all text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-paint-roller text-slate-500"></i>
+                <span>Pintura</span>
+            </button>
+            <button id="btn-summary" onclick="switchTab('summary-tab')" class="tab-btn flex-1 min-w-[120px] py-2.5 px-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition-all text-amber-600 hover:bg-amber-50">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span>Presupuesto</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: MUROS DE LADRILLO/BLOQUE -->
+        <div id="muros-tab" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Inputs -->
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                    <i class="fa-solid fa-cubes text-brand-accent text-xl"></i>
+                    <h2 class="text-lg font-bold text-slate-800">Cálculo para Muros y Tabiques</h2>
+                </div>
+
+                <form id="form-muros" class="space-y-4" onsubmit="event.preventDefault(); calculateMuros();">
+                    <!-- Nombre del elemento -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre / Identificador del Muro</label>
+                        <input type="text" id="muro-nombre" value="Muro Fachada Principal" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent text-sm" placeholder="Ej. Muro Sala 1">
+                    </div>
+
+                    <!-- Dimensiones del muro -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Largo Muro (m)</label>
+                            <input type="number" step="0.01" id="muro-largo" value="5.0" min="0.1" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-accent text-sm" required oninput="calculateMuros()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Alto Muro (m)</label>
+                            <input type="number" step="0.01" id="muro-alto" value="2.6" min="0.1" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-accent text-sm" required oninput="calculateMuros()">
+                        </div>
+                    </div>
+
+                    <!-- Tipo y Dimensiones de Ladrillo -->
+                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Dimensiones del Block / Ladrillo</label>
+                            <select id="muro-preset" onchange="applyLadrilloPreset()" class="text-xs bg-white border border-slate-300 rounded px-2 py-1 font-medium text-slate-700">
+                                <option value="custom">Personalizado</option>
+                                <option value="block15" selected>Block Hueco de Concreto (14x19x39 cm)</option>
+                                <option value="block12">Block Hueco de Concreto (12x19x39 cm)</option>
+                                <option value="tabique">Tabique Rojo Recochido (7x12x24 cm)</option>
+                                <option value="lad_hueco">Ladrillo Cerámico Hueco (8x18x33 cm)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Largo (cm)</label>
+                                <input type="number" step="0.1" id="muro-lad-largo" value="39" class="w-full px-2.5 py-1.5 rounded border border-slate-300 text-sm" required oninput="setMuroPresetCustom(); calculateMuros()">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Alto (cm)</label>
+                                <input type="number" step="0.1" id="muro-lad-alto" value="19" class="w-full px-2.5 py-1.5 rounded border border-slate-300 text-sm" required oninput="setMuroPresetCustom(); calculateMuros()">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Ancho (cm)</label>
+                                <input type="number" step="0.1" id="muro-lad-ancho" value="14" class="w-full px-2.5 py-1.5 rounded border border-slate-300 text-sm" required oninput="setMuroPresetCustom(); calculateMuros()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Espesor de Junta & Dosificación & Desperdicio -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Junta / Mezcla (cm)</label>
+                            <input type="number" step="0.1" id="muro-junta" value="1.5" min="0.5" max="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculateMuros()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Dosificación Mortero</label>
+                            <select id="muro-dosificacion" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" onchange="calculateMuros()">
+                                <option value="1:3">1:3 (Fuerte)</option>
+                                <option value="1:4" selected>1:4 (Estándar)</option>
+                                <option value="1:5">1:5 (Moderado)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">% Desperdicio</label>
+                            <input type="number" id="muro-desperdicio" value="10" min="0" max="30" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculateMuros()">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addToBudgetFromMuros()" class="w-full py-3 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl transition shadow flex items-center justify-center space-x-2 mt-2">
+                        <i class="fa-solid fa-cart-plus text-brand-accent"></i>
+                        <span>Agregar al Presupuesto Global</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results -->
+            <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-sm">Resultados Calculados</h3>
+                        <span class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono" id="res-muro-area-badge">13.00 m²</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-slate-400">Total Piezas (Block/Ladrillo)</p>
+                                <p class="text-2xl font-black text-white" id="res-muro-piezas">0</p>
+                                <p class="text-[10px] text-slate-400" id="res-muro-piezas-sub">incluye desperdicio</p>
+                            </div>
+                            <i class="fa-solid fa-shapes text-3xl text-amber-500/40"></i>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Cemento (Bultos 50kg)</p>
+                                <p class="text-xl font-bold text-white" id="res-muro-cemento">0</p>
+                                <p class="text-[10px] text-slate-400" id="res-muro-cemento-kg">(0 kg)</p>
+                            </div>
+
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Arena</p>
+                                <p class="text-xl font-bold text-white" id="res-muro-arena">0 m³</p>
+                                <p class="text-[10px] text-slate-400" id="res-muro-arena-botes">~0 botes (19L)</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-slate-400">Agua Estimada</p>
+                                <p class="text-lg font-bold text-blue-400" id="res-muro-agua">0 Litros</p>
+                            </div>
+                            <i class="fa-solid fa-droplet text-blue-400/40 text-2xl"></i>
+                        </div>
+
+                        <!-- Price summary mini -->
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs">
+                            <div class="flex justify-between font-bold text-amber-300">
+                                <span>Costo Estimado Materiales:</span>
+                                <span id="res-muro-costo">$0.00</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Basado en la configuración de precios unitarios actual.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-700 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span><i class="fa-solid fa-circle-info mr-1"></i> Considera junta de <span id="info-junta-val">1.5</span> cm</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CONCRETO / LOSA / FIRME -->
+        <div id="concreto-tab" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                    <i class="fa-solid fa-truck-mortero text-brand-accent text-xl"></i>
+                    <h2 class="text-lg font-bold text-slate-800">Cálculo de Concreto Estructural / Firmes</h2>
+                </div>
+
+                <form id="form-concreto" class="space-y-4" onsubmit="event.preventDefault(); calculateConcreto();">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre / Elemento</label>
+                        <input type="text" id="conc-nombre" value="Losa de Cimentación / Piso" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-accent text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Largo (m)</label>
+                            <input type="number" step="0.01" id="conc-largo" value="6.0" min="0.1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculateConcreto()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Ancho (m)</label>
+                            <input type="number" step="0.01" id="conc-ancho" value="4.0" min="0.1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculateConcreto()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Espesor (cm)</label>
+                            <input type="number" step="0.5" id="conc-espesor" value="10" min="1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculateConcreto()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Resistencia (f'c)</label>
+                            <select id="conc-resistencia" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" onchange="calculateConcreto()">
+                                <option value="150">f'c = 150 kg/cm² (Pisos / Banquetas)</option>
+                                <option value="200" selected>f'c = 200 kg/cm² (Losa / Columnas / Trabes)</option>
+                                <option value="250">f'c = 250 kg/cm² (Estructural Alta Carga)</option>
+                                <option value="300">f'c = 300 kg/cm² (Especial / Industrial)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">% Desperdicio</label>
+                            <input type="number" id="conc-desperdicio" value="7" min="0" max="25" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculateConcreto()">
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800">
+                        <i class="fa-solid fa-info-circle mr-1 text-blue-600"></i> Proporción estimada según resistencia seleccionada (Agregados estándar de 3/4").
+                    </div>
+
+                    <button type="button" onclick="addToBudgetFromConcreto()" class="w-full py-3 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl transition shadow flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-cart-plus text-brand-accent"></i>
+                        <span>Agregar al Presupuesto Global</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Concreto -->
+            <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-sm">Materiales para Concreto</h3>
+                        <span class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono" id="res-conc-vol-badge">0.00 m³</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-slate-400">Volumen Concreto (Con Desperdicio)</p>
+                                <p class="text-2xl font-black text-amber-400" id="res-conc-volumen">0 m³</p>
+                            </div>
+                            <i class="fa-solid fa-cube text-2xl text-amber-500/30"></i>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Cemento (Bultos 50kg)</p>
+                                <p class="text-xl font-bold text-white" id="res-conc-cemento">0</p>
+                                <p class="text-[10px] text-slate-400" id="res-conc-cemento-kg">(0 kg)</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Arena</p>
+                                <p class="text-xl font-bold text-white" id="res-conc-arena">0 m³</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Grava (3/4")</p>
+                                <p class="text-xl font-bold text-white" id="res-conc-grava">0 m³</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Agua Total</p>
+                                <p class="text-xl font-bold text-blue-400" id="res-conc-agua">0 L</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-xs">
+                            <div class="flex justify-between font-bold text-amber-300">
+                                <span>Costo Estimado Materiales:</span>
+                                <span id="res-conc-costo">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: APLANADO / REVOQUE -->
+        <div id="revoque-tab" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                    <i class="fa-solid fa-layer-group text-brand-accent text-xl"></i>
+                    <h2 class="text-lg font-bold text-slate-800">Cálculo para Revoque / Aplanado / Repello</h2>
+                </div>
+
+                <form id="form-revoque" class="space-y-4" onsubmit="event.preventDefault(); calculateRevoque();">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre / Zona</label>
+                        <input type="text" id="rev-nombre" value="Revoque Paredes Interiores" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Área Total (m²)</label>
+                            <input type="number" step="0.1" id="rev-area" value="25.0" min="0.1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculateRevoque()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Espesor Capa (cm)</label>
+                            <input type="number" step="0.1" id="rev-espesor" value="1.5" min="0.5" max="5" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculateRevoque()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Proporción Mortero</label>
+                            <select id="rev-proporcion" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" onchange="calculateRevoque()">
+                                <option value="1:3">1:3 (Impermeable / Exterior)</option>
+                                <option value="1:4" selected>1:4 (Interior Estándar)</option>
+                                <option value="1:5">1:5 (Fino / Aplanado suave)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">% Desperdicio</label>
+                            <input type="number" id="rev-desperdicio" value="10" min="0" max="30" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculateRevoque()">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addToBudgetFromRevoque()" class="w-full py-3 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl transition shadow flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-cart-plus text-brand-accent"></i>
+                        <span>Agregar al Presupuesto Global</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-sm">Materiales para Revoque</h3>
+                        <span class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono" id="res-rev-vol-badge">0.00 m³</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                            <p class="text-xs text-slate-400">Volumen Mortero Necesario</p>
+                            <p class="text-2xl font-black text-amber-400" id="res-rev-volumen">0 m³</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Cemento (Bultos 50kg)</p>
+                                <p class="text-xl font-bold text-white" id="res-rev-cemento">0</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Arena Fina</p>
+                                <p class="text-xl font-bold text-white" id="res-rev-arena">0 m³</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs">
+                            <div class="flex justify-between font-bold text-amber-300">
+                                <span>Costo Estimado Materiales:</span>
+                                <span id="res-rev-costo">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PINTURA E IMPERMEABILIZANTE -->
+        <div id="pintura-tab" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                    <i class="fa-solid fa-paint-roller text-brand-accent text-xl"></i>
+                    <h2 class="text-lg font-bold text-slate-800">Cálculo de Pintura / Impermeabilizante</h2>
+                </div>
+
+                <form id="form-pintura" class="space-y-4" onsubmit="event.preventDefault(); calculatePintura();">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre / Área a aplicar</label>
+                        <input type="text" id="pin-nombre" value="Pintura Paredes Interiores" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Superficie (m²)</label>
+                            <input type="number" step="0.1" id="pin-area" value="40.0" min="0.1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculatePintura()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Manos / Capas</label>
+                            <input type="number" id="pin-manos" value="2" min="1" max="5" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" required oninput="calculatePintura()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Rendimiento (m² por Litro / mano)</label>
+                            <input type="number" step="0.5" id="pin-rendimiento" value="8.0" min="1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculatePintura()">
+                            <p class="text-[10px] text-slate-400 mt-1">Vinílica std: ~8m²/L | Impermeabilizante: ~1.5m²/L</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">% Desperdicio</label>
+                            <input type="number" id="pin-desperdicio" value="5" min="0" max="25" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" oninput="calculatePintura()">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addToBudgetFromPintura()" class="w-full py-3 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl transition shadow flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-cart-plus text-brand-accent"></i>
+                        <span>Agregar al Presupuesto Global</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-sm">Pintura / Recubrimiento</h3>
+                        <span class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono" id="res-pin-litros-badge">0 Litros</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                            <p class="text-xs text-slate-400">Total Pintura Necesaria</p>
+                            <p class="text-3xl font-black text-amber-400" id="res-pin-litros">0 L</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Cubetas (19 Litros)</p>
+                                <p class="text-xl font-bold text-white" id="res-pin-cubetas">0</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                                <p class="text-xs text-slate-400">Galones (3.78 L)</p>
+                                <p class="text-xl font-bold text-white" id="res-pin-galones">0</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs">
+                            <div class="flex justify-between font-bold text-amber-300">
+                                <span>Costo Estimado Pintura:</span>
+                                <span id="res-pin-costo">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: RESUMEN Y PRESUPUESTO GLOBAL ACUMULADO -->
+        <div id="summary-tab" class="tab-content space-y-6 hidden">
+            <!-- Summary Header Actions -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Resumen Consolidado de la Obra</h2>
+                    <p class="text-xs text-slate-500">Lista acumulada de todos los elementos calculados para compra directa.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <button onclick="clearBudget()" class="px-3.5 py-2 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold rounded-lg transition">
+                        <i class="fa-solid fa-trash mr-1"></i> Vaciar Lista
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition flex items-center space-x-2 shadow">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Imprimir / Exportar PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Print Banner Header (visible only on print) -->
+            <div class="print-only mb-6 border-b-2 border-slate-800 pb-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">PRESUPUESTO Y MATERIALES DE OBRA</h1>
+                        <p class="text-sm text-slate-600">Generado por ObraCalc Pro</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-500">
+                        <p>Fecha: <span id="print-date"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Consolidated Items Card -->
+            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-brand-navy text-white p-6 rounded-2xl shadow-lg border border-slate-700">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                    <h3 class="font-bold text-amber-400 uppercase tracking-wider text-sm"><i class="fa-solid fa-boxes-stacked mr-2"></i> Total Global de Materiales Acumulados</h3>
+                    <span class="text-xs bg-amber-500 text-slate-950 font-bold px-3 py-1 rounded-full" id="budget-total-cost-badge">$0.00 MXN</span>
+                </div>
+
+                <div id="consolidated-materials-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <!-- Dynamic Material Totals injected via JS -->
+                </div>
+            </div>
+
+            <!-- List of Individual Items Added -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-800 flex justify-between items-center">
+                    <span>Elementos Calculados en el Proyecto</span>
+                    <span class="text-xs text-slate-500 font-normal" id="item-count-text">0 elementos</span>
+                </div>
+                <div class="divide-y divide-slate-200 overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-slate-100 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3">Elemento</th>
+                                <th class="px-4 py-3">Tipo</th>
+                                <th class="px-4 py-3">Dimensiones / Rend.</th>
+                                <th class="px-4 py-3">Materiales Desglosados</th>
+                                <th class="px-4 py-3 text-right">Costo Est.</th>
+                                <th class="px-4 py-3 text-center no-print">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="budget-table-body" class="divide-y divide-slate-100">
+                            <!-- Injected JS rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: PRECIOS UNITARIOS GLOBALES -->
+    <div id="prices-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-tags text-amber-500"></i>
+                    <h3 class="font-bold text-slate-800">Ajuste de Precios Unitarios (Estimado)</h3>
+                </div>
+                <button onclick="toggleGlobalPricesModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500 mb-4">Configura los precios de referencia de tu zona para calcular el presupuesto monetario aproximado.</p>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700">Cemento (Bulto 50kg)</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400">$</span>
+                        <input type="number" id="price-cemento" value="220" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg" onchange="updateGlobalPrices()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700">Arena (m³)</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400">$</span>
+                        <input type="number" id="price-arena" value="450" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg" onchange="updateGlobalPrices()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700">Grava (m³)</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400">$</span>
+                        <input type="number" id="price-grava" value="480" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg" onchange="updateGlobalPrices()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700">Block de Concreto (Pieza)</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400">$</span>
+                        <input type="number" id="price-block" value="16.5" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg" onchange="updateGlobalPrices()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700">Pintura Vinílica (Cubeta 19L)</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400">$</span>
+                        <input type="number" id="price-pintura" value="1800" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg" onchange="updateGlobalPrices()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-3 border-t border-slate-100 flex justify-end">
+                <button onclick="toggleGlobalPricesModal()" class="px-4 py-2 bg-brand-navy text-white text-xs font-bold rounded-lg hover:bg-slate-800">
+                    Guardar y Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state for calculations and budget list
+        const state = {
+            budget: [],
+            prices: {
+                cemento: 220,
+                arena: 450,
+                grava: 480,
+                block: 16.5,
+                pinturaCubeta: 1800
+            },
+            currentCalculations: {
+                muros: null,
+                concreto: null,
+                revoque: null,
+                pintura: null
+            }
+        };
+
+        // Initialize App on DOM Load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('print-date').innerText = new Date().toLocaleDateString('es-ES', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            
+            // Initial Calculations
+            calculateMuros();
+            calculateConcreto();
+            calculateRevoque();
+            calculatePintura();
+            renderBudget();
+        });
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-navy', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+
+            const activeBtnMap = {
+                'muros-tab': 'btn-muros',
+                'concreto-tab': 'btn-concreto',
+                'revoque-tab': 'btn-revoque',
+                'pintura-tab': 'btn-pintura',
+                'summary-tab': 'btn-summary'
+            };
+
+            const activeBtn = document.getElementById(activeBtnMap[tabId]);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                activeBtn.classList.add('bg-brand-navy', 'text-white', 'shadow-sm');
+            }
+        }
+
+        // Modal Handler
+        function toggleGlobalPricesModal() {
+            const modal = document.getElementById('prices-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function updateGlobalPrices() {
+            state.prices.cemento = parseFloat(document.getElementById('price-cemento').value) || 0;
+            state.prices.arena = parseFloat(document.getElementById('price-arena').value) || 0;
+            state.prices.grava = parseFloat(document.getElementById('price-grava').value) || 0;
+            state.prices.block = parseFloat(document.getElementById('price-block').value) || 0;
+            state.prices.pinturaCubeta = parseFloat(document.getElementById('price-pintura').value) || 0;
+
+            // Recalculate everything with new prices
+            calculateMuros();
+            calculateConcreto();
+            calculateRevoque();
+            calculatePintura();
+            renderBudget();
+        }
+
+        // --- 1. MUROS CALCULATIONS ---
+        function applyLadrilloPreset() {
+            const preset = document.getElementById('muro-preset').value;
+            const largoEl = document.getElementById('muro-lad-largo');
+            const altoEl = document.getElementById('muro-lad-alto');
+            const anchoEl = document.getElementById('muro-lad-ancho');
+
+            if (preset === 'block15') {
+                largoEl.value = 39; altoEl.value = 19; anchoEl.value = 14;
+            } else if (preset === 'block12') {
+                largoEl.value = 39; altoEl.value = 19; anchoEl.value = 12;
+            } else if (preset === 'tabique') {
+                largoEl.value = 24; altoEl.value = 7; anchoEl.value = 12;
+            } else if (preset === 'lad_hueco') {
+                largoEl.value = 33; altoEl.value = 18; anchoEl.value = 8;
+            }
+            calculateMuros();
+        }
+
+        function setMuroPresetCustom() {
+            document.getElementById('muro-preset').value = 'custom';
+        }
+
+        function calculateMuros() {
+            const largo = parseFloat(document.getElementById('muro-largo').value) || 0;
+            const alto = parseFloat(document.getElementById('muro-alto').value) || 0;
+            const ladLargo = (parseFloat(document.getElementById('muro-lad-largo').value) || 0) / 100; // cm to m
+            const ladAlto = (parseFloat(document.getElementById('muro-lad-alto').value) || 0) / 100;
+            const ladAncho = (parseFloat(document.getElementById('muro-lad-ancho').value) || 0) / 100;
+            const junta = (parseFloat(document.getElementById('muro-junta').value) || 1.5) / 100; // cm to m
+            const desperdicio = (parseFloat(document.getElementById('muro-desperdicio').value) || 0) / 100;
+            const dosificacion = document.getElementById('muro-dosificacion').value;
+
+            document.getElementById('info-junta-val').innerText = (junta * 100).toFixed(1);
+
+            const areaMuro = largo * alto;
+            document.getElementById('res-muro-area-badge').innerText = `${areaMuro.toFixed(2)} m²`;
+
+            // Bricks per m2
+            const areaBrickConJunta = (ladLargo + junta) * (ladAlto + junta);
+            let piezasNetas = areaMuro / areaBrickConJunta;
+            let piezasTotales = Math.ceil(piezasNetas * (1 + desperdicio));
+
+            // Mortar calculation
+            // Mortar volume = Total Wall Volume - Total Bricks Volume
+            const volMuroTotal = areaMuro * ladAncho;
+            const volUnLadrillo = ladLargo * ladAlto * ladAncho;
+            const volLadrillosSinJunta = piezasNetas * volUnLadrillo;
+            let volMortero = Math.max(0, volMuroTotal - volLadrillosSinJunta);
+            volMortero = volMortero * (1 + desperdicio);
+
+            // Mortar materials ratio (per m3 of mortar)
+            // 1:4 -> ~360 kg cemento, ~1.05 m3 arena, ~200L agua
+            let cementoKgPerM3 = 360;
+            let arenaM3PerM3 = 1.05;
+
+            if (dosificacion === '1:3') {
+                cementoKgPerM3 = 450; arenaM3PerM3 = 1.0;
+            } else if (dosificacion === '1:5') {
+                cementoKgPerM3 = 300; arenaM3PerM3 = 1.1;
+            }
+
+            const totalCementoKg = volMortero * cementoKgPerM3;
+            const totalCementoBultos = Math.ceil(totalCementoKg / 50);
+            const totalArenaM3 = volMortero * arenaM3PerM3;
+            const totalAguaL = Math.round(volMortero * 220);
+
+            // Cost calculation
+            const costoTotal = (piezasTotales * state.prices.block) + 
+                               (totalCementoBultos * state.prices.cemento) + 
+                               (totalArenaM3 * state.prices.arena);
+
+            // Update UI
+            document.getElementById('res-muro-piezas').innerText = piezasTotales.toLocaleString();
+            document.getElementById('res-muro-cemento').innerText = totalCementoBultos;
+            document.getElementById('res-muro-cemento-kg').innerText = `(${totalCementoKg.toFixed(1)} kg)`;
+            document.getElementById('res-muro-arena').innerText = `${totalArenaM3.toFixed(2)} m³`;
+            document.getElementById('res-muro-arena-botes').innerText = `~${Math.round(totalArenaM3 * 52)} botes (19L)`;
+            document.getElementById('res-muro-agua').innerText = `${totalAguaL} L`;
+            document.getElementById('res-muro-costo').innerText = `$${costoTotal.toFixed(2)} MXN`;
+
+            state.currentCalculations.muros = {
+                nombre: document.getElementById('muro-nombre').value || 'Muro',
+                tipo: 'Muro / Pared',
+                detalles: `${areaMuro.toFixed(2)} m² (${largo}x${alto}m)`,
+                materiales: {
+                    block: piezasTotales,
+                    cemento: totalCementoBultos,
+                    arena: totalArenaM3,
+                    grava: 0,
+                    pinturaLitros: 0
+                },
+                costo: costoTotal
+            };
+        }
+
+        // --- 2. CONCRETO CALCULATIONS ---
+        function calculateConcreto() {
+            const largo = parseFloat(document.getElementById('conc-largo').value) || 0;
+            const ancho = parseFloat(document.getElementById('conc-ancho').value) || 0;
+            const espesor = (parseFloat(document.getElementById('conc-espesor').value) || 0) / 100; // cm to m
+            const resistencia = document.getElementById('conc-resistencia').value;
+            const desperdicio = (parseFloat(document.getElementById('conc-desperdicio').value) || 0) / 100;
+
+            const volNeto = largo * ancho * espesor;
+            const volTotal = volNeto * (1 + desperdicio);
+
+            document.getElementById('res-conc-vol-badge').innerText = `${volNeto.toFixed(2)} m³`;
+
+            // Mix Proportions per m3 of concrete
+            let cementoKgM3 = 300;
+            let arenaM3M3 = 0.52;
+            let gravaM3M3 = 0.68;
+            let aguaLM3 = 180;
+
+            if (resistencia === '150') {
+                cementoKgM3 = 260; arenaM3M3 = 0.55; gravaM3M3 = 0.70; aguaLM3 = 175;
+            } else if (resistencia === '200') {
+                cementoKgM3 = 320; arenaM3M3 = 0.50; gravaM3M3 = 0.67; aguaLM3 = 185;
+            } else if (resistencia === '250') {
+                cementoKgM3 = 380; arenaM3M3 = 0.48; gravaM3M3 = 0.65; aguaLM3 = 195;
+            } else if (resistencia === '300') {
+                cementoKgM3 = 420; arenaM3M3 = 0.45; gravaM3M3 = 0.63; aguaLM3 = 200;
+            }
+
+            const totalCementoKg = volTotal * cementoKgM3;
+            const totalCementoBultos = Math.ceil(totalCementoKg / 50);
+            const totalArenaM3 = volTotal * arenaM3M3;
+            const totalGravaM3 = volTotal * gravaM3M3;
+            const totalAguaL = Math.round(volTotal * aguaLM3);
+
+            const costoTotal = (totalCementoBultos * state.prices.cemento) +
+                               (totalArenaM3 * state.prices.arena) +
+                               (totalGravaM3 * state.prices.grava);
+
+            document.getElementById('res-conc-volumen').innerText = `${volTotal.toFixed(2)} m³`;
+            document.getElementById('res-conc-cemento').innerText = totalCementoBultos;
+            document.getElementById('res-conc-cemento-kg').innerText = `(${totalCementoKg.toFixed(1)} kg)`;
+            document.getElementById('res-conc-arena').innerText = `${totalArenaM3.toFixed(2)} m³`;
+            document.getElementById('res-conc-grava').innerText = `${totalGravaM3.toFixed(2)} m³`;
+            document.getElementById('res-conc-agua').innerText = `${totalAguaL} L`;
+            document.getElementById('res-conc-costo').innerText = `$${costoTotal.toFixed(2)} MXN`;
+
+            state.currentCalculations.concreto = {
+                nombre: document.getElementById('conc-nombre').value || 'Concreto',
+                tipo: 'Concreto / Losa',
+                detalles: `${volTotal.toFixed(2)} m³ (f'c ${resistencia})`,
+                materiales: {
+                    block: 0,
+                    cemento: totalCementoBultos,
+                    arena: totalArenaM3,
+                    grava: totalGravaM3,
+                    pinturaLitros: 0
+                },
+                costo: costoTotal
+            };
+        }
+
+        // --- 3. REVOQUE CALCULATIONS ---
+        function calculateRevoque() {
+            const area = parseFloat(document.getElementById('rev-area').value) || 0;
+            const espesor = (parseFloat(document.getElementById('rev-espesor').value) || 0) / 100; // cm to m
+            const proporcion = document.getElementById('rev-proporcion').value;
+            const desperdicio = (parseFloat(document.getElementById('rev-desperdicio').value) || 0) / 100;
+
+            const volNeto = area * espesor;
+            const volTotal = volNeto * (1 + desperdicio);
+
+            document.getElementById('res-rev-vol-badge').innerText = `${volNeto.toFixed(2)} m³`;
+
+            let cementoKgM3 = 360;
+            let arenaM3M3 = 1.05;
+
+            if (proporcion === '1:3') {
+                cementoKgM3 = 450; arenaM3M3 = 1.00;
+            } else if (proporcion === '1:5') {
+                cementoKgM3 = 300; arenaM3M3 = 1.10;
+            }
+
+            const totalCementoKg = volTotal * cementoKgM3;
+            const totalCementoBultos = Math.ceil(totalCementoKg / 50);
+            const totalArenaM3 = volTotal * arenaM3M3;
+
+            const costoTotal = (totalCementoBultos * state.prices.cemento) + (totalArenaM3 * state.prices.arena);
+
+            document.getElementById('res-rev-volumen').innerText = `${volTotal.toFixed(2)} m³`;
+            document.getElementById('res-rev-cemento').innerText = totalCementoBultos;
+            document.getElementById('res-rev-arena').innerText = `${totalArenaM3.toFixed(2)} m³`;
+            document.getElementById('res-rev-costo').innerText = `$${costoTotal.toFixed(2)} MXN`;
+
+            state.currentCalculations.revoque = {
+                nombre: document.getElementById('rev-nombre').value || 'Revoque',
+                tipo: 'Revoque / Repello',
+                detalles: `${area.toFixed(2)} m² (${(espesor*100).toFixed(1)} cm esp.)`,
+                materiales: {
+                    block: 0,
+                    cemento: totalCementoBultos,
+                    arena: totalArenaM3,
+                    grava: 0,
+                    pinturaLitros: 0
+                },
+                costo: costoTotal
+            };
+        }
+
+        // --- 4. PINTURA CALCULATIONS ---
+        function calculatePintura() {
+            const area = parseFloat(document.getElementById('pin-area').value) || 0;
+            const manos = parseInt(document.getElementById('pin-manos').value) || 1;
+            const rendimiento = parseFloat(document.getElementById('pin-rendimiento').value) || 1;
+            const desperdicio = (parseFloat(document.getElementById('pin-desperdicio').value) || 0) / 100;
+
+            const superficieTotal = area * manos;
+            const litrosNetos = superficieTotal / rendimiento;
+            const litrosTotales = litrosNetos * (1 + desperdicio);
+
+            const cubetas19L = (litrosTotales / 19).toFixed(1);
+            const galones = (litrosTotales / 3.785).toFixed(1);
+
+            const costoTotal = (litrosTotales / 19) * state.prices.pinturaCubeta;
+
+            document.getElementById('res-pin-litros-badge').innerText = `${litrosTotales.toFixed(1)} Litros`;
+            document.getElementById('res-pin-litros').innerText = `${litrosTotales.toFixed(1)} L`;
+            document.getElementById('res-pin-cubetas').innerText = cubetas19L;
+            document.getElementById('res-pin-galones').innerText = galones;
+            document.getElementById('res-pin-costo').innerText = `$${costoTotal.toFixed(2)} MXN`;
+
+            state.currentCalculations.pintura = {
+                nombre: document.getElementById('pin-nombre').value || 'Pintura',
+                tipo: 'Pintura / Acabado',
+                detalles: `${area.toFixed(2)} m² (${manos} manos)`,
+                materiales: {
+                    block: 0,
+                    cemento: 0,
+                    arena: 0,
+                    grava: 0,
+                    pinturaLitros: litrosTotales
+                },
+                costo: costoTotal
+            };
+        }
+
+        // --- BUDGET ACCUMULATOR LOGIC ---
+        function addToBudgetFromMuros() {
+            if (state.currentCalculations.muros) {
+                state.budget.push({ ...state.currentCalculations.muros, id: Date.now() });
+                renderBudget();
+                showNotification('Elemento agregado al presupuesto');
+            }
+        }
+
+        function addToBudgetFromConcreto() {
+            if (state.currentCalculations.concreto) {
+                state.budget.push({ ...state.currentCalculations.concreto, id: Date.now() });
+                renderBudget();
+                showNotification('Elemento agregado al presupuesto');
+            }
+        }
+
+        function addToBudgetFromRevoque() {
+            if (state.currentCalculations.revoque) {
+                state.budget.push({ ...state.currentCalculations.revoque, id: Date.now() });
+                renderBudget();
+                showNotification('Elemento agregado al presupuesto');
+            }
+        }
+
+        function addToBudgetFromPintura() {
+            if (state.currentCalculations.pintura) {
+                state.budget.push({ ...state.currentCalculations.pintura, id: Date.now() });
+                renderBudget();
+                showNotification('Elemento agregado al presupuesto');
+            }
+        }
+
+        function removeFromBudget(id) {
+            state.budget = state.budget.filter(item => item.id !== id);
+            renderBudget();
+        }
+
+        function clearBudget() {
+            if (state.budget.length === 0) return;
+            if (confirm('¿Estás seguro de que deseas vaciar toda la lista de presupuesto?')) {
+                state.budget = [];
+                renderBudget();
+            }
+        }
+
+        // Render Budget and Global Summary
+        function renderBudget() {
+            const tbody = document.getElementById('budget-table-body');
+            const cartBadge = document.getElementById('cart-count-badge');
+            const itemCountText = document.getElementById('item-count-text');
+            const consolidatedGrid = document.getElementById('consolidated-materials-grid');
+            
+            cartBadge.innerText = state.budget.length;
+            itemCountText.innerText = `${state.budget.length} elementos`;
+
+            tbody.innerHTML = '';
+
+            if (state.budget.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
+                            <p>No hay elementos agregados al presupuesto global aún.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            let totals = {
+                block: 0,
+                cemento: 0,
+                arena: 0,
+                grava: 0,
+                pinturaLitros: 0,
+                costoTotal: 0
+            };
+
+            state.budget.forEach(item => {
+                totals.block += item.materiales.block || 0;
+                totals.cemento += item.materiales.cemento || 0;
+                totals.arena += item.materiales.arena || 0;
+                totals.grava += item.materiales.grava || 0;
+                totals.pinturaLitros += item.materiales.pinturaLitros || 0;
+                totals.costoTotal += item.costo || 0;
+
+                // Format materials string per item
+                let matDesc = [];
+                if (item.materiales.block) matDesc.push(`${item.materiales.block} Pzs Block`);
+                if (item.materiales.cemento) matDesc.push(`${item.materiales.cemento} Bultos Cemento`);
+                if (item.materiales.arena) matDesc.push(`${item.materiales.arena.toFixed(2)} m³ Arena`);
+                if (item.materiales.grava) matDesc.push(`${item.materiales.grava.toFixed(2)} m³ Grava`);
+                if (item.materiales.pinturaLitros) matDesc.push(`${item.materiales.pinturaLitros.toFixed(1)} L Pintura`);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-800">${item.nombre}</td>
+                    <td class="px-4 py-3 text-slate-600"><span class="px-2 py-0.5 rounded bg-slate-100 text-xs">${item.tipo}</span></td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">${item.detalles}</td>
+                    <td class="px-4 py-3 text-slate-700 text-xs font-medium">${matDesc.join(' • ')}</td>
+                    <td class="px-4 py-3 text-right font-bold text-slate-800">$${item.costo.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-center no-print">
+                        <button onclick="removeFromBudget(${item.id})" class="text-red-500 hover:text-red-700 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Total Cost Badge
+            document.getElementById('budget-total-cost-badge').innerText = `$${totals.costoTotal.toFixed(2)} MXN`;
+
+            // Render Consolidated Cards
+            consolidatedGrid.innerHTML = `
+                <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Blocks / Ladrillos</p>
+                    <p class="text-xl font-black text-amber-400 mt-1">${totals.block.toLocaleString()} <span class="text-xs font-normal text-slate-300">pzs</span></p>
+                </div>
+                <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Cemento (50kg)</p>
+                    <p class="text-xl font-black text-amber-400 mt-1">${totals.cemento} <span class="text-xs font-normal text-slate-300">bultos</span></p>
+                </div>
+                <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Arena Total</p>
+                    <p class="text-xl font-black text-amber-400 mt-1">${totals.arena.toFixed(2)} <span class="text-xs font-normal text-slate-300">m³</span></p>
+                </div>
+                <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Grava Total</p>
+                    <p class="text-xl font-black text-amber-400 mt-1">${totals.grava.toFixed(2)} <span class="text-xs font-normal text-slate-300">m³</span></p>
+                </div>
+                <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Pintura Total</p>
+                    <p class="text-xl font-black text-amber-400 mt-1">${totals.pinturaLitros.toFixed(1)} <span class="text-xs font-normal text-slate-300">L</span></p>
+                </div>
+                <div class="bg-amber-500/20 p-3 rounded-xl border border-amber-500/40">
+                    <p class="text-[11px] text-amber-300 uppercase font-bold">Total Estimado</p>
+                    <p class="text-lg font-black text-white mt-1">$${totals.costoTotal.toFixed(0)} <span class="text-xs font-normal">MXN</span></p>
+                </div>
+            `;
+        }
+
+        // Notification helper
+        function showNotification(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl border border-amber-500/40 z-50 flex items-center space-x-2 transition-all transform translate-y-2 no-print';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-amber-400"></i> <span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 300);
+            }, 2200);
+        }
+    </script>
+</body>
+</html>
